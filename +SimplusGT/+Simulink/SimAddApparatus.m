@@ -133,7 +133,9 @@ for i = 1:N_Apparatus
                 case 2
                     ApparatusDiscreMethod = 'Hybrid Trapezoidal';
                 case 3
-                    ApparatusDiscreMethod = 'Virtual Damping';
+                    ApparatusDiscreMethod = 'One-Beat Delay Trapezoidal';
+                case 4
+                    ApparatusDiscreMethod = 'Euler Plus Dissipation';    
                 otherwise
                     error(['Error: Wrong discretization method.'])
             end

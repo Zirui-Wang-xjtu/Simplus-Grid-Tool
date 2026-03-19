@@ -218,6 +218,8 @@ methods(Static)
                 Fk = Qk;
             case 3
                 Fk = Dk;
+            case 4
+                Fk = Dk + Ck * inv(eye(length(Ak))-Ak*obj.Ts/2)*Bk*obj.Ts/2;
             otherwise
                 error('Invalid discretization method.');
         end
@@ -401,6 +403,11 @@ methods(Access = protected)
                      delta_x = obj.Wk * (obj.StateSpaceEqu(obj,obj.x,u,1)+obj.StateSpaceEqu(obj,obj.x,obj.ulast,1))/2;
                      obj.x = obj.x + delta_x;
                 end
+                
+            % ### Case 4 : Euler Plus Dissipation 
+            case 4
+                delta_x = obj.Ts * inv(eye(length(obj.Ak))-obj.Ak*obj.Ts/2)*obj.StateSpaceEqu(obj, obj.x, u, 1);
+                obj.x = delta_x + obj.x;
         end
         
         obj.ulast = u;  
@@ -453,7 +460,19 @@ methods(Access = protected)
                     else
                         y = obj.StateSpaceEqu(obj,obj.x,u,2);
                     end                  
-                end                
+                end 
+           % ### Case 4 : Euler Plus Dissipation 
+           % It is equivalent to trapezoidal tule.
+            case 4
+                if obj.DirectFeedthrough
+                    y = obj.StateSpaceEqu(obj,obj.x,u,2) + obj.Ck * inv(eye(length(obj.Ak))-obj.Ak*obj.Ts/2)*obj.Ts/2*obj.StateSpaceEqu(obj,obj.x,u,1);
+                else
+                    if obj.VirtualResistor
+                        y = obj.StateSpaceEqu(obj,obj.x,obj.uk,2) + obj.Ck * inv(eye(length(obj.Ak))-obj.Ak*obj.Ts/2)*obj.Ts/2*obj.StateSpaceEqu(obj,obj.x,obj.uk,1) - obj.Gk*obj.uk + obj.Fk*(u-obj.uk);
+                    else
+                        y = obj.StateSpaceEqu(obj,obj.x,obj.uk,2) + obj.Ck * inv(eye(length(obj.Ak))-obj.Ak*obj.Ts/2)*obj.Ts/2*obj.StateSpaceEqu(obj,obj.x,obj.uk,1) + obj.Fk*(u-obj.uk);
+                    end
+                end
         end
         
         obj.uk = u;                 % store the current u=u[k+1/2]
